@@ -1,14 +1,248 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Biblioteca</title>
-    </head>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Biblioteca</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <section id="login-panel" class="login-panel">
+    <div class="auth-card">
+      <aside class="auth-aside">
+        <div id="painel-login-texto">
+          <h2>Bem-vindo de volta</h2>
+          <p>Use sua conta para acessar a biblioteca.</p>
+          <button id="mostrar-cadastro" type="button" class="auth-switch-button">Criar conta</button>
+        </div>
+        <div id="painel-cadastro-texto" hidden>
+          <h2>Já possui uma conta?</h2>
+          <p>Entre com seu e-mail e senha.</p>
+          <button id="mostrar-login" type="button" class="auth-switch-button">Entrar</button>
+        </div>
+      </aside>
 
-    <body>
-        <button>Livros</button>
-        <button>Clientes</button>
-        <button>Emprestimos</button>
-    </body>
+      <div class="auth-content">
+        <form id="form-login" class="login-form">
+          <h1>Entrar</h1>
+          <p>Administradores entram diretamente com o e-mail e a senha definidos na configuração.</p>
+          <div>
+            <label for="login-email">E-mail</label>
+            <input id="login-email" type="email" autocomplete="username" maxlength="254" required autofocus>
+          </div>
+          <div>
+            <label for="login-password">Senha</label>
+            <input id="login-password" type="password" autocomplete="current-password" required>
+          </div>
+          <p id="login-erro" class="mensagem erro" role="alert" hidden></p>
+          <button id="botao-entrar" type="submit">Entrar</button>
+        </form>
 
+        <form id="form-cadastro" class="login-form" hidden>
+          <h1>Criar conta</h1>
+          <p>Cadastre-se como atendente para acessar o sistema.</p>
+          <div>
+            <label for="cadastro-nome">Nome de usuário</label>
+            <input id="cadastro-nome" type="text" autocomplete="name" maxlength="150" required>
+          </div>
+          <div>
+            <label for="cadastro-email">E-mail</label>
+            <input id="cadastro-email" type="email" autocomplete="email" maxlength="254" required>
+          </div>
+          <div>
+            <label for="cadastro-password">Senha</label>
+            <input id="cadastro-password" type="password" autocomplete="new-password" minlength="12" required>
+          </div>
+          <p id="cadastro-erro" class="mensagem erro" role="alert" hidden></p>
+          <button id="botao-cadastrar" type="submit">Criar conta</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <div id="aplicacao" hidden>
+  <header>
+    <h1>Biblioteca</h1>
+    <div class="sessao">
+      <span id="usuario-logado"></span>
+      <button id="botao-sair" type="button">Sair</button>
+    </div>
+    <nav>
+      <button type="button" data-section="livros">Livros</button>
+      <button type="button" data-section="clientes">Clientes</button>
+      <button type="button" data-section="emprestimos">Empréstimos</button>
+      <button id="menu-usuarios" type="button" data-section="usuarios" hidden>Usuários</button>
+    </nav>
+  </header>
+
+  <main>
+    <p id="mensagem-global" class="mensagem" role="status" hidden></p>
+    <section id="livros">
+      <h2>Gerenciar livros</h2>
+      <form id="form-livro">
+        <div>
+          <label for="livro-isbn">ISBN (opcional)</label>
+          <input id="livro-isbn" type="text" inputmode="numeric" maxlength="17" placeholder="9781234567897">
+        </div>
+        <div>
+          <label for="livro-nome">Nome do livro</label>
+          <input id="livro-nome" type="text" required>
+        </div>
+        <div>
+          <label for="livro-autor">Autor</label>
+          <input id="livro-autor" type="text" required>
+        </div>
+        <div>
+          <label for="livro-preco">Preço</label>
+          <input id="livro-preco" type="number" min="0" step="0.01" required>
+        </div>
+        <div>
+          <label for="livro-quantidade">Total de exemplares</label>
+          <input id="livro-quantidade" type="number" min="0" required>
+        </div>
+        <button type="submit">Cadastrar livro</button>
+        <button id="cancelar-edicao-livro" type="button" hidden>
+          Cancelar edição
+        </button>
+      </form>
+
+      <h3>Lista de livros</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Autor</th>
+            <th>Preço</th>
+            <th>Disponíveis / total</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista-livros"></tbody>
+      </table>
+    </section>
+
+    <section id="clientes" hidden>
+      <h2>Gerenciar clientes</h2>
+      <form id="form-cliente">
+        <div>
+          <label for="cliente-nome">Nome</label>
+          <input id="cliente-nome" type="text" required>
+        </div>
+        <div>
+          <label for="cliente-email">E-mail</label>
+          <input id="cliente-email" type="email" required>
+        </div>
+        <div>
+          <label for="cliente-telefone">Telefone</label>
+          <input id="cliente-telefone" type="tel" pattern="[0-9]{11}"
+                 placeholder="Somente 11 dígitos" required>
+        </div>
+        <button type="submit">Cadastrar cliente</button>
+        <button id="cancelar-edicao-cliente" type="button" hidden>
+          Cancelar edição
+        </button>
+      </form>
+
+      <h3>Lista de clientes</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Telefone</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista-clientes"></tbody>
+      </table>
+    </section>
+
+    <section id="emprestimos" hidden>
+      <h2>Gerenciar empréstimos</h2>
+      <form id="form-emprestimo">
+        <div>
+          <label for="emprestimo-cliente-id">ID do cliente</label>
+          <input id="emprestimo-cliente-id" type="number" min="1" required>
+        </div>
+        <div>
+          <label for="emprestimo-livro-id">ID do livro</label>
+          <input id="emprestimo-livro-id" type="number" min="1" required>
+        </div>
+        <button type="submit">Registrar empréstimo</button>
+      </form>
+
+      <h3>Lista de empréstimos</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Livro</th>
+            <th>Empréstimo</th>
+            <th>Devolução prevista</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista-emprestimos"></tbody>
+      </table>
+
+      <button id="botao-emprestimos-devolvidos" type="button">
+        Listar empréstimos devolvidos
+      </button>
+
+      <div id="historico-emprestimos-devolvidos" hidden>
+        <h3>Histórico de empréstimos devolvidos</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Livro</th>
+              <th>Autor</th>
+              <th>Empréstimo</th>
+              <th>Devolução</th>
+            </tr>
+          </thead>
+          <tbody id="lista-emprestimos-devolvidos"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="usuarios" hidden>
+      <h2>Gerenciar usuários</h2>
+      <form id="form-usuario">
+        <div>
+          <label for="usuario-nome">Nome</label>
+          <input id="usuario-nome" type="text" maxlength="150" required>
+        </div>
+        <div>
+          <label for="usuario-email">E-mail</label>
+          <input id="usuario-email" type="email" required>
+        </div>
+        <div>
+          <label for="usuario-senha">Senha</label>
+          <input id="usuario-senha" type="password" minlength="12" autocomplete="new-password" required>
+        </div>
+        <div>
+          <label for="usuario-papel">Papel</label>
+          <select id="usuario-papel" required>
+            <option value="STAFF">Atendente</option>
+            <option value="ADMIN">Administrador</option>
+          </select>
+        </div>
+        <button type="submit">Cadastrar usuário</button>
+      </form>
+
+      <h3>Usuários ativos e inativos</h3>
+      <table>
+        <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Status</th><th>Ações</th></tr></thead>
+        <tbody id="lista-usuarios"></tbody>
+      </table>
+    </section>
+  </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
 </html>
-

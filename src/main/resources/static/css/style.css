@@ -1,0 +1,289 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+header {
+  padding: 20px;
+  background-color: #2f5d50;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+header h1 {
+  margin: 0 0 15px;
+}
+
+.sessao {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.sessao button {
+  background-color: transparent;
+  border: 1px solid #b9d6cd;
+}
+
+.login-panel {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.auth-card {
+  display: grid;
+  grid-template-columns: minmax(230px, 0.7fr) minmax(360px, 1.3fr);
+  width: min(100%, 820px);
+  overflow: hidden;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 6px 24px #00000014;
+}
+
+.auth-aside {
+  display: grid;
+  place-items: center;
+  padding: 36px 28px;
+  background: #2f5d50;
+  color: white;
+  text-align: center;
+}
+
+.auth-aside h2 {
+  margin: 0;
+  color: white;
+}
+
+.auth-aside p {
+  margin: 14px 0 26px;
+  line-height: 1.5;
+}
+
+.auth-switch-button {
+  min-width: 150px;
+  background: transparent;
+  border: 1px solid #b9d6cd;
+}
+
+.auth-switch-button:hover {
+  background: #ffffff1a;
+}
+
+.auth-content {
+  display: grid;
+  align-items: center;
+  min-height: 420px;
+  padding: 42px;
+}
+
+.login-form {
+  width: min(100%, 390px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 auto;
+}
+
+.login-form[hidden] {
+  display: none;
+}
+
+.login-form > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.login-form > button:not(.auth-switch-button) {
+  width: 100%;
+}
+
+.login-form h1 {
+  margin: 0;
+  color: #2f5d50;
+}
+
+.login-form p {
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.mensagem {
+  padding: 12px;
+  border-radius: 4px;
+  margin: 0 0 18px;
+  background: #e8f0ed;
+  color: #1d4d3f;
+}
+
+.mensagem.erro {
+  background: #fbe5e5;
+  color: #8d2020;
+}
+
+nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 4px;
+  background-color: #3d7a68;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+button:hover {
+  background-color: #2e6252;
+}
+
+button[id^="cancelar"] {
+  background-color: #777;
+}
+
+button[id^="cancelar"]:hover {
+  background-color: #5f5f5f;
+}
+
+main {
+  max-width: 1050px;
+  margin: 25px auto;
+  padding: 0 20px;
+}
+
+section {
+  padding: 22px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+h2,
+h3 {
+  margin-top: 0;
+  color: #2f5d50;
+}
+
+h3 {
+  margin-top: 30px;
+}
+
+main form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+main form div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+input:focus {
+  outline: 2px solid #89b8aa;
+  border-color: #3d7a68;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+th,
+td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background-color: #e8f0ed;
+  color: #2f5d50;
+}
+
+td button {
+  margin-right: 5px;
+  padding: 6px 9px;
+  font-size: 13px;
+}
+
+#botao-emprestimos-devolvidos {
+  margin-top: 20px;
+}
+
+#historico-emprestimos-devolvidos {
+  margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-aside {
+    min-height: 180px;
+  }
+
+  .auth-content {
+    min-height: 0;
+    padding: 28px 22px;
+  }
+
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  main {
+    margin-top: 15px;
+    padding: 0 12px;
+  }
+
+  section {
+    padding: 16px;
+  }
+
+  form {
+    grid-template-columns: 1fr;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

@@ -9,36 +9,56 @@ public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
-    @Column(nullable = false)
+    @Version
+    private Long version;
+
+    @Column(unique = true, length = 20)
+    private String isbn;
+
+    @Column(nullable = false, length = 150)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String author;
 
-    @Column(nullable = false)
-    private double price;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal price;
 
+    /** Quantidade disponível para novos empréstimos. */
     @Column(nullable = false)
     private int quantity;
+
+    @Column(nullable = false)
+    private int totalQuantity;
+
+    @Column(nullable = false)
+    private boolean active = true;
 
     protected Book() {
         // Necessário para o JPA
     }
 
-    public Book(String nome, String author, double price, int quantity){
-        this.name = nome;
-        this.author = author;
-        this.price = price;
-        this.quantity = quantity;
-    }
-
-    public void update(String name, String author, double price, int quantity) {
+    public Book(String isbn, String name, String author, BigDecimal price, int quantity){
+        this.isbn = isbn;
         this.name = name;
         this.author = author;
         this.price = price;
         this.quantity = quantity;
+        this.totalQuantity = quantity;
+    }
+
+    public void update(String isbn, String name, String author, BigDecimal price, int totalQuantity, int activeLoans) {
+        if (totalQuantity < activeLoans) {
+            throw new IllegalArgumentException("A quantidade total não pode ser menor que os empréstimos em aberto.");
+        }
+        this.isbn = isbn;
+        this.name = name;
+        this.author = author;
+        this.price = price;
+        this.totalQuantity = totalQuantity;
+        this.quantity = totalQuantity - activeLoans;
     }
 
     public Long getId() {
@@ -53,7 +73,7 @@ public class Book {
         return author;
     }
 
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
@@ -64,5 +84,11 @@ public class Book {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
+
+    public String getIsbn() { return isbn; }
+    public int getTotalQuantity() { return totalQuantity; }
+    public boolean isActive() { return active; }
+    public void deactivate() { this.active = false; }
+    public void reactivate() { this.active = true; }
 
 }

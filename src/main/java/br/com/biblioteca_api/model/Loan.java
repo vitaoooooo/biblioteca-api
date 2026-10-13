@@ -10,6 +10,9 @@ public class Loan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Long version;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "client_id")
     private Client client;
@@ -18,7 +21,9 @@ public class Loan {
     @JoinColumn(name = "book_id")
     private Book book;
 
+    @Column(nullable = false)
     private LocalDate loanDate;
+    @Column(nullable = false)
     private LocalDate dueDate;
     private LocalDate returnedDate;
 
@@ -28,11 +33,11 @@ public class Loan {
         // Necessário para o JPA
     }
 
-    public Loan(Client client, Book book) {
+    public Loan(Client client, Book book, LocalDate loanDate, LocalDate dueDate) {
         this.client = client;
         this.book = book;
-        this.loanDate = LocalDate.now();
-        this.dueDate = loanDate.plusDays(7);
+        this.loanDate = loanDate;
+        this.dueDate = dueDate;
         this.returned = false;
     }
 
@@ -45,8 +50,8 @@ public class Loan {
         this.returnedDate = LocalDate.now();
     }
 
-    public boolean isLate() {
-        return !returned && LocalDate.now().isAfter(dueDate);
+    public boolean isLate(LocalDate currentDate) {
+        return !returned && currentDate.isAfter(dueDate);
     }
 
     public Long getId() {
