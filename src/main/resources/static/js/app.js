@@ -11,7 +11,13 @@ async function errorMessage(response, fallback) {
   try { const error = await response.json(); return Object.values(error.fieldErrors || {}).join(" ") || error.message || error.detail || fallback; } catch (_) { return fallback; }
 }
 function isAdmin() { return session?.user?.role === "ADMIN"; }
-function headers(extra = {}) { return {...extra }; }
+function csrfHeaders() {
+  const prefix = "XSRF-TOKEN=";
+  const cookie = document.cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(prefix));
+  if (!cookie) return {};
+  return { "X-XSRF-TOKEN": decodeURIComponent(cookie.slice(prefix.length)) };
+}
+function headers(extra = {}) { return { ...csrfHeaders(), ...extra }; }
 function basicToken(email, password) {
   const bytes = new TextEncoder().encode(`${email}:${password}`);
   let binary = "";
@@ -47,7 +53,7 @@ function setLoginLoading(loading) {
 async function api(url, options = {}) {
   let response;
   try {
-    response = await fetch(url, { ...options, headers: headers({ Accept: "application/json", ...options.headers }) });
+    response = await fetch(url, { ...options, credentials: "same-origin", headers: headers({ Accept: "application/json", ...options.headers }) });
   } catch (_) {
     throw new Error("Não foi possível conectar ao servidor. Inicie a aplicação e acesse http://localhost:8080.");
   }
@@ -76,6 +82,10 @@ async function startSession() {
     `${session.user.name} (${session.user.role})`;
 
   $("#menu-usuarios").hidden = !isAdmin();
+  $("#menu-clientes").hidden = !isAdmin();
+  $("#gerenciar-emprestimos").hidden = !isAdmin();
+  $("#gerenciar-livros").hidden = !isAdmin();
+  $("#cancelar-edicao-livro").hidden = true;
   $("#login-erro").hidden = true;
   $("#login-panel").hidden = true;
   $("#aplicacao").hidden = false;
@@ -95,9 +105,7 @@ $("#form-login").addEventListener("submit", async (event) => {
   try {
     const resp = await fetch("/api/auth/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: headers({ "Content-Type": "application/json" }),
       credentials: "same-origin",
       body: JSON.stringify({ email, password })
     });
@@ -134,7 +142,8 @@ $("#form-cadastro").addEventListener("submit", async (event) => {
   try {
     const response = await fetch("/api/auth/register", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: headers({ "Content-Type": "application/json", Accept: "application/json" }),
+      credentials: "same-origin",
       body: JSON.stringify({ name, email, password })
     });
     if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível criar a conta."));
@@ -157,15 +166,52 @@ document.querySelectorAll("[data-section]").forEach((button) => button.addEventL
   if (target === "usuarios" && isAdmin()) await loadUsers();
 }));
 
+$("#botao-emprestimos-devolvidos").addEventListener("click", async () => {
+  try {
+    await loadReturnedLoans();
+  } catch (error) {
+    notice(error.message, "erro");
+  }
+});
+
 async function loadBooks() {
   try {
-    const response = await api("/api/books"); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível carregar os livros."));
-    const items = await response.json(); books.clear(); $("#lista-livros").innerHTML = items.map((book) => {
-      books.set(book.id, book); const actions = isAdmin() ? `<button type="button" onclick="editBook(${book.id})">Editar</button><button type="button" onclick="disableBook(${book.id})">Inativar</button>` : "-";
-      return `<tr><td>${book.id}</td><td>${escapeHtml(book.name)}</td><td>${escapeHtml(book.author)}</td><td>R$ ${Number(book.price).toFixed(2)}</td><td>${book.quantity} / ${book.totalQuantity}</td><td>${actions}</td></tr>`;
+    const response = await api("/api/books");
+
+    if (!response.ok) {
+      throw new Error(
+        await errorMessage(response, "Não foi possível carregar os livros.")
+      );
+    }
+
+    const items = await response.json();
+    books.clear();
+
+    $("#lista-livros").innerHTML = items.map((book) => {
+      books.set(book.id, book);
+
+      const actions = isAdmin()
+        ? `<button type="button" onclick="editBook(${book.id})">Editar</button>
+           <button type="button" onclick="disableBook(${book.id})">Inativar</button>`
+        : book.quantity > 0
+          ? `<button type="button" onclick="borrowBook(${book.id})">Pegar emprestado</button>`
+          : "Indisponível";
+
+      return `<tr>
+        <td>${book.id}</td>
+        <td>${escapeHtml(book.name)}</td>
+        <td>${escapeHtml(book.author)}</td>
+        <td>R$ ${Number(book.price).toFixed(2)}</td>
+        <td>${book.quantity} / ${book.totalQuantity}</td>
+        <td>${actions}</td>
+      </tr>`;
     }).join("");
-  } catch (error) { if (session) notice(error.message, "erro"); }
+
+  } catch (error) {
+    if (session) notice(error.message, "erro");
+  }
 }
+
 $("#form-livro").addEventListener("submit", async (event) => {
   event.preventDefault();
   const payload = { isbn: $("#livro-isbn").value.replaceAll("-", "") || null, name: $("#livro-nome").value.trim(), author: $("#livro-autor").value.trim(), price: $("#livro-preco").value, quantity: Number($("#livro-quantidade").value) };
@@ -177,6 +223,64 @@ window.disableBook = async (id) => { if (!isAdmin() || !confirm("Deseja inativar
 function resetBook() { editingBookId = null; $("#form-livro").reset(); $("#form-livro button[type='submit']").textContent = "Cadastrar livro"; $("#cancelar-edicao-livro").hidden = true; }
 $("#cancelar-edicao-livro").addEventListener("click", resetBook);
 
+window.borrowBook = async (bookId) => {
+  const book = books.get(bookId);
+
+  if (!book || book.quantity <= 0) {
+    notice("Este livro não está disponível para empréstimo.", "erro");
+    return;
+  }
+
+  if (!confirm(`Deseja pegar emprestado o livro "${book.name}"?`)) {
+    return;
+  }
+
+  try {
+    const response = await api("/api/loans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bookId: bookId })
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        await errorMessage(
+          response,
+          "Não foi possível realizar o empréstimo."
+        )
+      );
+    }
+
+    notice("Empréstimo realizado com sucesso!");
+    await loadBooks();
+    await loadLoans();
+
+  } catch (error) {
+    notice(error.message, "erro");
+  }
+};
+
+window.returnLoan = async (id) => {
+    try {
+        const response = await api(`/api/loans/${id}/return`, {
+            method: "PATCH"
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                await errorMessage(response, "Não foi possível registrar a devolução.")
+            );
+        }
+
+        await Promise.all([loadLoans(), loadBooks()]);
+        notice("Devolução registrada.");
+    } catch (error) {
+        if (session) {
+            notice(error.message, "erro");
+        }
+    }
+};
+
 async function loadClients() {
   try { const response = await api("/api/clients"); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível carregar os clientes.")); const items = await response.json(); clients.clear(); $("#lista-clientes").innerHTML = items.map((client) => { clients.set(client.id, client); const actions = isAdmin() ? `<button type="button" onclick="editClient(${client.id})">Editar</button><button type="button" onclick="disableClient(${client.id})">Inativar</button>` : "-"; return `<tr><td>${client.id}</td><td>${escapeHtml(client.name)}</td><td>${escapeHtml(client.email)}</td><td>${escapeHtml(client.phoneNumber)}</td><td>${actions}</td></tr>`; }).join(""); } catch (error) { if (session) notice(error.message, "erro"); }
 }
@@ -186,12 +290,62 @@ window.disableClient = async (id) => { if (!isAdmin() || !confirm("Deseja inativ
 function resetClient() { editingClientId = null; $("#form-cliente").reset(); $("#form-cliente button[type='submit']").textContent = "Cadastrar cliente"; $("#cancelar-edicao-cliente").hidden = true; }
 $("#cancelar-edicao-cliente").addEventListener("click", resetClient);
 
+
 async function loadLoans() {
-  try { const response = await api("/api/loans"); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível carregar os empréstimos.")); const loans = await response.json(); $("#lista-emprestimos").innerHTML = loans.map((loan) => `<tr><td>${escapeHtml(loan.client.name)}</td><td>${escapeHtml(loan.book.name)}</td><td>${loan.loanDate}</td><td>${loan.dueDate}</td><td>${loan.late ? "Em atraso" : "Em aberto"}</td><td><button type="button" onclick="returnLoan(${loan.id})">Devolver</button></td></tr>`).join(""); } catch (error) { if (session) notice(error.message, "erro"); }
+  try {
+    const response = await api("/api/loans");
+
+    if (!response.ok) {
+      throw new Error(
+        await errorMessage(response, "Não foi possível carregar os empréstimos.")
+      );
+    }
+
+    const loans = await response.json();
+
+    $("#lista-emprestimos").innerHTML = loans.map((loan) => {
+      const actions = `<button type="button" onclick="window.returnLoan(${loan.id})">Devolver</button>`;
+
+      return `<tr>
+        <td>${escapeHtml(loan.client.name)}</td>
+        <td>${escapeHtml(loan.book.name)}</td>
+        <td>${loan.loanDate}</td>
+        <td>${loan.dueDate}</td>
+        <td>${loan.late ? "Em atraso" : "Em aberto"}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join("");
+
+  } catch (error) {
+    if (session) notice(error.message, "erro");
+  }
 }
-$("#form-emprestimo").addEventListener("submit", async (event) => { event.preventDefault(); try { const response = await api("/api/loans", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ clientId: Number($("#emprestimo-cliente-id").value), bookId: Number($("#emprestimo-livro-id").value) }) }); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível registrar o empréstimo.")); $("#form-emprestimo").reset(); await Promise.all([loadLoans(), loadBooks()]); notice("Empréstimo registrado."); } catch (error) { if (session) notice(error.message, "erro"); } });
-window.returnLoan = async (id) => { try { const response = await api(`/api/loans/${id}/return`, { method: "PATCH" }); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível registrar a devolução.")); await Promise.all([loadLoans(), loadBooks()]); notice("Devolução registrada."); } catch (error) { if (session) notice(error.message, "erro"); } };
-$("#botao-emprestimos-devolvidos").addEventListener("click", async () => { try { const response = await api("/api/loans/returned"); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível carregar o histórico.")); const loans = await response.json(); $("#lista-emprestimos-devolvidos").innerHTML = loans.map((loan) => `<tr><td>${escapeHtml(loan.clientName)}</td><td>${escapeHtml(loan.bookName)}</td><td>${escapeHtml(loan.bookAuthor)}</td><td>${loan.loanDate}</td><td>${loan.returnedDate}</td></tr>`).join(""); $("#historico-emprestimos-devolvidos").hidden = false; } catch (error) { if (session) notice(error.message, "erro"); } });
+
+async function loadReturnedLoans() {
+const response = await api("/api/loans/returned");
+
+if (!response.ok) {
+    throw new Error(
+        await errorMessage(response, "Não foi possível carregar o histórico de devoluções.")
+    );
+}
+
+const devolucoes = await response.json();
+const tbody = document.querySelector("#lista-emprestimos-devolvidos");
+
+tbody.innerHTML = devolucoes.map(devolucao => `
+    <tr>
+        <td>${devolucao.clientName ?? ""}</td>
+        <td>${devolucao.bookName ?? ""}</td>
+        <td>${devolucao.bookAuthor ?? ""}</td>
+        <td>${devolucao.loanDate ?? ""}</td>
+        <td>${devolucao.returnedDate ?? ""}</td>
+    </tr>
+`).join("");
+
+document.querySelector("#historico-emprestimos-devolvidos").hidden = false;
+
+}
 
 async function loadUsers() {
   if (!isAdmin()) return;
@@ -200,4 +354,8 @@ async function loadUsers() {
 $("#form-usuario").addEventListener("submit", async (event) => { event.preventDefault(); try { const payload = { name: $("#usuario-nome").value.trim(), email: $("#usuario-email").value.trim(), password: $("#usuario-senha").value, role: $("#usuario-papel").value }; const response = await api("/api/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível cadastrar o usuário.")); $("#form-usuario").reset(); await loadUsers(); notice("Usuário cadastrado."); } catch (error) { if (session) notice(error.message, "erro"); } });
 window.disableUser = async (id) => { if (!confirm("Deseja inativar este usuário?")) return; try { const response = await api(`/api/users/${id}`, { method: "DELETE" }); if (!response.ok) throw new Error(await errorMessage(response, "Não foi possível inativar o usuário.")); await loadUsers(); notice("Usuário inativado."); } catch (error) { notice(error.message, "erro"); } };
 
-(async () => { const saved = sessionStorage.getItem("library.session"); if (saved) try { await startSession(JSON.parse(saved).token); } catch (_) { logout(); } })();
+(async () => {
+  try { await fetch("/api/auth/csrf", { credentials: "same-origin" }); } catch (_) { /* cookie CSRF é tentada de novo no login */ }
+  const saved = sessionStorage.getItem("library.session");
+  if (saved) try { await startSession(JSON.parse(saved).token); } catch (_) { logout(); }
+})();

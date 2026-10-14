@@ -42,6 +42,10 @@ header h1 {
   padding: 20px;
 }
 
+.login-panel[hidden] {
+  display: none;
+}
+
 .auth-card {
   display: grid;
   grid-template-columns: minmax(230px, 0.7fr) minmax(360px, 1.3fr);

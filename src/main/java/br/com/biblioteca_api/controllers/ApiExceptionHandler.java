@@ -14,7 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
-
+import org.springframework.security.access.AccessDeniedException;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -46,6 +46,20 @@ public class ApiExceptionHandler {
     ResponseEntity<ApiError> integrity(DataIntegrityViolationException ex, HttpServletRequest request) {
         return response(HttpStatus.CONFLICT, "DATA_CONFLICT", "A operação viola uma regra de unicidade ou integridade.", request, Map.of());
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ResponseEntity<ApiError> accessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+
+        return response(
+                HttpStatus.FORBIDDEN,
+                "ACCESS_DENIED",
+                "Você não tem permissão para realizar esta operação.",
+                request,
+                Map.of());
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiError> unexpected(Exception ex, HttpServletRequest request) {
         log.error("Erro inesperado ao processar {} {}", request.getMethod(), request.getRequestURI(), ex);

@@ -20,6 +20,9 @@ public class AppUser {
     private Role role;
     @Column(nullable = false)
     private boolean active = true;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", unique = true)
+    private Client client;
 
     protected AppUser() { }
 
@@ -34,6 +37,8 @@ public class AppUser {
     public String getEmail() { return email; }
     public String getPasswordHash() { return passwordHash; }
     public Role getRole() { return role; }
+    public Client getClient() { return client; }
+    public void setClient(Client client) { this.client = client; }
     public boolean isActive() { return active; }
     public void deactivate() { active = false; }
 }

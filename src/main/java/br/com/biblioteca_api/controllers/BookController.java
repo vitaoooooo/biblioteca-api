@@ -32,20 +32,20 @@ public class BookController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<BookResponse> create(@RequestBody @Valid BookRequest request) {
         Book book = bookService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(BookResponse.from(book));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public ResponseEntity<List<BookResponse>> listAll() {
         return ResponseEntity.ok(bookService.listAll().stream().map(BookResponse::from).toList());
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     public PageResponse<BookResponse> listPage(@RequestParam(defaultValue = "0") @Min(0) int page,
                                                @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return PageResponse.from(bookService.listPage(PageRequest.of(page, size)), BookResponse::from);

@@ -32,20 +32,20 @@ public class ClientController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<ClientResponse> create(@RequestBody @Valid ClientRequest request) {
         Client client = clientService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ClientResponse.from(client));
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<List<ClientResponse>> listAll() {
         return ResponseEntity.ok(clientService.listAll().stream().map(ClientResponse::from).toList());
     }
 
     @GetMapping("/page")
-    @PreAuthorize("hasAnyRole('ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public PageResponse<ClientResponse> listPage(@RequestParam(defaultValue = "0") @Min(0) int page,
                                                  @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         return PageResponse.from(clientService.listPage(PageRequest.of(page, size)), ClientResponse::from);

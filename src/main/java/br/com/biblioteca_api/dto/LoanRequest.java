@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record LoanRequest(
-        @NotNull(message = "O id do cliente é obrigatório.")
         @Positive(message = "O id do cliente deve ser positivo.")
         Long clientId,
 

@@ -14,6 +14,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import br.com.biblioteca_api.model.Client;
+import br.com.biblioteca_api.repository.ClientRepository;
+import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Locale;
@@ -22,9 +25,12 @@ import java.util.Locale;
 public class UserService implements UserDetailsService {
     private final AppUserRepository repository;
     private final PasswordEncoder passwordEncoder;
-    public UserService(AppUserRepository repository, PasswordEncoder passwordEncoder) {
+    private final ClientRepository clientRepository;
+
+    public UserService(AppUserRepository repository, PasswordEncoder passwordEncoder, ClientRepository clientRepository) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.clientRepository = clientRepository;
     }
     @Override public UserDetails loadUserByUsername(String email) {
         AppUser user = repository.findByEmailAndActiveTrue(normalize(email))
@@ -37,10 +43,42 @@ public class UserService implements UserDetailsService {
         if (repository.existsByEmail(email)) throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um usuário com este e-mail.");
         return repository.save(new AppUser(request.name().trim(), email, passwordEncoder.encode(request.password()), request.role()));
     }
+    @Transactional
     public AppUser register(RegistrationRequest request) {
         String email = normalize(request.email());
-        if (repository.existsByEmail(email)) throw new ResponseStatusException(HttpStatus.CONFLICT, "Já existe um usuário com este e-mail.");
-        return repository.save(new AppUser(request.name().trim(), email, passwordEncoder.encode(request.password()), Role.STAFF));
+
+        if (repository.existsByEmail(email)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Já existe um usuário com este e-mail."
+            );
+        }
+
+        if (clientRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Já existe um cliente com este e-mail."
+            );
+        }
+
+        Client client = new Client(
+                request.name().trim(),
+                email,
+                null
+        );
+
+        client = clientRepository.save(client);
+
+        AppUser user = new AppUser(
+                request.name().trim(),
+                email,
+                passwordEncoder.encode(request.password()),
+                Role.USER
+        );
+
+        user.setClient(client);
+
+        return repository.save(user);
     }
     public List<AppUser> list() { return repository.findAll(); }
     public AppUser findByEmail(String email) {

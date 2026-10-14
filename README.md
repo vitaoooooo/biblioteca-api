@@ -94,9 +94,9 @@ As migrations do banco são gerenciadas pelo Flyway.
 
 A API utiliza autenticação para proteger os endpoints privados.
 
-- **STAFF:** acesso às operações permitidas para funcionários da biblioteca.
+- **USER:** acesso às operações da biblioteca (livros, clientes e empréstimos).
 - **ADMIN:** acesso administrativo, incluindo o gerenciamento de usuários e operações restritas.
-- **Cadastro:** novos usuários registrados pelo endpoint público recebem o perfil `STAFF`.
+- **Cadastro:** novos usuários registrados pelo endpoint público recebem o perfil `USER`.
 
 O acesso às operações administrativas é controlado no backend. A interface não substitui as verificações de autorização da API.
 

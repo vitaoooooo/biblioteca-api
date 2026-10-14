@@ -40,7 +40,7 @@
 
         <form id="form-cadastro" class="login-form" hidden>
           <h1>Criar conta</h1>
-          <p>Cadastre-se como atendente para acessar o sistema.</p>
+          <p>Cadastre-se como usuário para acessar o sistema.</p>
           <div>
             <label for="cadastro-nome">Nome de usuário</label>
             <input id="cadastro-nome" type="text" autocomplete="name" maxlength="150" required>
@@ -69,7 +69,7 @@
     </div>
     <nav>
       <button type="button" data-section="livros">Livros</button>
-      <button type="button" data-section="clientes">Clientes</button>
+      <button id="menu-clientes" type="button" data-section="clientes">Clientes</button>
       <button type="button" data-section="emprestimos">Empréstimos</button>
       <button id="menu-usuarios" type="button" data-section="usuarios" hidden>Usuários</button>
     </nav>
@@ -78,34 +78,37 @@
   <main>
     <p id="mensagem-global" class="mensagem" role="status" hidden></p>
     <section id="livros">
-      <h2>Gerenciar livros</h2>
-      <form id="form-livro">
-        <div>
-          <label for="livro-isbn">ISBN (opcional)</label>
-          <input id="livro-isbn" type="text" inputmode="numeric" maxlength="17" placeholder="9781234567897">
-        </div>
-        <div>
-          <label for="livro-nome">Nome do livro</label>
-          <input id="livro-nome" type="text" required>
-        </div>
-        <div>
-          <label for="livro-autor">Autor</label>
-          <input id="livro-autor" type="text" required>
-        </div>
-        <div>
-          <label for="livro-preco">Preço</label>
-          <input id="livro-preco" type="number" min="0" step="0.01" required>
-        </div>
-        <div>
-          <label for="livro-quantidade">Total de exemplares</label>
-          <input id="livro-quantidade" type="number" min="0" required>
-        </div>
-        <button type="submit">Cadastrar livro</button>
-        <button id="cancelar-edicao-livro" type="button" hidden>
-          Cancelar edição
-        </button>
-      </form>
+      <div id="gerenciar-livros">
+        <h2>Gerenciar livros</h2>
 
+        <form id="form-livro">
+          <div>
+            <label for="livro-isbn">ISBN (opcional)</label>
+            <input id="livro-isbn" type="text" inputmode="numeric" maxlength="17" placeholder="9781234567897">
+          </div>
+          <div>
+            <label for="livro-nome">Nome do livro</label>
+            <input id="livro-nome" type="text" required>
+          </div>
+          <div>
+            <label for="livro-autor">Autor</label>
+            <input id="livro-autor" type="text" required>
+          </div>
+          <div>
+            <label for="livro-preco">Preço</label>
+            <input id="livro-preco" type="number" min="0" step="0.01" required>
+          </div>
+          <div>
+            <label for="livro-quantidade">Total de exemplares</label>
+            <input id="livro-quantidade" type="number" min="0" required>
+          </div>
+          <button type="submit">Cadastrar livro</button>
+          <button id="cancelar-edicao-livro" type="button" hidden>
+            Cancelar edição
+          </button>
+        </form>
+
+      </div>
       <h3>Lista de livros</h3>
       <table>
         <thead>
@@ -160,18 +163,20 @@
     </section>
 
     <section id="emprestimos" hidden>
-      <h2>Gerenciar empréstimos</h2>
-      <form id="form-emprestimo">
-        <div>
-          <label for="emprestimo-cliente-id">ID do cliente</label>
-          <input id="emprestimo-cliente-id" type="number" min="1" required>
-        </div>
-        <div>
-          <label for="emprestimo-livro-id">ID do livro</label>
-          <input id="emprestimo-livro-id" type="number" min="1" required>
-        </div>
-        <button type="submit">Registrar empréstimo</button>
-      </form>
+      <div id="gerenciar-emprestimos">
+        <h2>Gerenciar empréstimos</h2>
+        <form id="form-emprestimo">
+          <div>
+            <label for="emprestimo-cliente-id">ID do cliente</label>
+            <input id="emprestimo-cliente-id" type="number" min="1" required>
+          </div>
+          <div>
+            <label for="emprestimo-livro-id">ID do livro</label>
+            <input id="emprestimo-livro-id" type="number" min="1" required>
+          </div>
+          <button type="submit">Registrar empréstimo</button>
+        </form>
+      </div>
 
       <h3>Lista de empréstimos</h3>
       <table>
@@ -227,7 +232,7 @@
         <div>
           <label for="usuario-papel">Papel</label>
           <select id="usuario-papel" required>
-            <option value="STAFF">Atendente</option>
+            <option value="USER">Usuário</option>
             <option value="ADMIN">Administrador</option>
           </select>
         </div>
